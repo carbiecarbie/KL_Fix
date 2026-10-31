@@ -1,6 +1,6 @@
 /*
- * Kane & Lynch: Dead Men - stutter fix code patterns, shared by the in-memory
- * patch DLL and the installer.
+ * Kane & Lynch: Dead Men - KL Fix code patterns of the in-memory
+ * patch DLL. installer/Core.cs keeps a copy to recognise supported exes.
  *
  *  1. no-rescan: ZSysInputWintel::Update re-enumerates every DirectInput device
  *     (IDirectInput8::EnumDevices, all classes) every 2.0 s while fewer than

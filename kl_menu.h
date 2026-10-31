@@ -11,7 +11,7 @@
  *     so that virtual screen covers the whole backbuffer. The GUI cameras are
  *     recognised by their entities, captured when the menu system creates them.
  *
- * Setting, in KL_StutterFix.ini:
+ * Setting, in KL_Fix.ini:
  *     [Display]
  *     MenuScale=auto       ; auto = screen height / 1080, 1 = off
  */

@@ -15,7 +15,7 @@
  *     replaced by kl_subtitle_layout(), which uses its own scale and divides the wrap
  *     width by it, so scaled lines still fit on screen.
  *
- * Settings, read from KL_StutterFix.ini in the game folder:
+ * Settings, read from KL_Fix.ini in the game folder:
  *     [Display]
  *     HudScale=auto        ; auto = screen height / 1080, or a number (0.5 - 4)
  *     SubtitleScale=auto   ; auto = same as HudScale

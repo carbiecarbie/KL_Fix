@@ -1,7 +1,11 @@
-# Kane & Lynch: Dead Men - Stutter Fix
+# Kane & Lynch: Dead Men - KL Fix
 
-Fixes the stutter in *Kane & Lynch: Dead Men* on PC (GOG, Steam and retail), and makes the
-HUD, subtitles and menus readable at high resolutions such as 4K.
+Fixes the stutter in *Kane & Lynch: Dead Men* on PC (GOG, Steam and retail), makes the
+HUD, subtitles and menus readable at high resolutions such as 4K, and removes the need
+for Games for Windows LIVE on the Steam and retail versions.
+
+*Formerly **KL Stutter Fix**. Installing 3.0 over Stutter Fix 2.x updates it in place and
+keeps your settings (`KL_StutterFix.ini` becomes `KL_Fix.ini`).*
 
 ## What it fixes
 
@@ -14,6 +18,12 @@ HUD, subtitles and menus readable at high resolutions such as 4K.
   at native pixel size, so at 4K everything is half the size it is at 1080p. The HUD,
   subtitles and menus are now scaled with the screen height (2x at 4K, 1.33x at 1440p),
   so they look as they do at 1080p. Mouse clicks in the menus still land correctly.
+- **Games for Windows LIVE (Steam/retail only).** These versions need the discontinued
+  GFWL client installed and signed in. If the game folder has no `xlive.dll` of its own,
+  the installer adds an offline `xlive.dll` (built from the open-source
+  [XLiveLess](THIRD_PARTY_NOTICES.md)), so GFWL is not needed. The GOG version already
+  ships its own offline `xlive.dll` and is left as is. Single-player and local
+  split-screen co-op work; online multiplayer and GFWL achievements do not.
 
 `kaneandlynch.exe` is **not** modified. The fix is a `dinput8.dll` placed in the game
 folder that patches the game's code in memory at startup. This matters because Games for
@@ -22,15 +32,19 @@ one.
 
 ## Install
 
-1. Download `KL_StutterFix_v2.1.zip` from [Releases](../../releases) and extract it.
+1. Download `KL_Fix_v3.0.zip` from [Releases](../../releases) and extract it.
 2. Close the game.
-3. Run `KL_StutterFix.exe`. It finds the game automatically. If it doesn't, put
-   `KL_StutterFix.exe` in the game folder, or drag `kaneandlynch.exe` onto it.
-4. Choose **[1] Install the fix**.
+3. Run `KL_Fix.exe`. It finds the game automatically (Steam libraries, GOG,
+   retail); if it doesn't, click **Change game folder** and select `kaneandlynch.exe`.
+4. Click **Install**. On Steam/retail, untick *Replace Games for Windows LIVE* first if
+   you want to keep GFWL.
 
-To remove it, run `KL_StutterFix.exe` again and choose **[2] Uninstall**.
+The window shows what is installed, and lets you change the HUD, subtitle and menu
+sizes at any time. To remove the fix, run it again and click **Uninstall**.
 
-Command line: `KL_StutterFix.exe [--install | --uninstall] [game folder]`
+Command line (no window): `KL_Fix.exe [--install | --uninstall] [--keep-gfwl] [game folder]`
+
+The installer needs the .NET Framework 4, which is part of Windows 10 and 11.
 
 ### Notes
 
@@ -38,8 +52,8 @@ Command line: `KL_StutterFix.exe [--install | --uninstall] [game folder]`
   game is running are not detected.
 - Another mod that is also a `dinput8.dll` (e.g. DirectInputFpsFix) is kept as
   `dinput8_next.dll` and still loads.
-- `KL_StutterFix.log` in the game folder shows whether the fix was applied.
-- Sizes can be changed in `KL_StutterFix.ini` in the game folder (created on install):
+- `KL_Fix.log` in the game folder shows whether the fix was applied.
+- Sizes are set in the installer window, or in `KL_Fix.ini` in the game folder:
 
   ```ini
   [Display]
@@ -47,10 +61,16 @@ Command line: `KL_StutterFix.exe [--install | --uninstall] [game folder]`
   SubtitleScale=auto  ; auto = same as HudScale
   MenuScale=auto      ; 1 = off
   ```
-- If you get "Access denied", run the installer as administrator (needed when the game is
-  installed under Program Files).
+- If the game folder needs administrator rights (e.g. under Program Files), the
+  installer offers to restart itself as administrator.
 - Version 1.0 modified the exe on disk, which broke the Steam version. Installing 2.x
-  restores the original exe automatically.
+  or later restores the original exe automatically.
+- The offline `xlive.dll` keeps its profile settings in
+  `%LOCALAPPDATA%\kaneandlynch\KL_NoGFWL`. Progress saved under a GFWL account may not
+  carry over; uninstalling the fix brings GFWL back and leaves all saves untouched.
+  Back up `%LOCALAPPDATA%\kaneandlynch` before switching if your progress matters.
+- An `xlive.dll` that is not this fix's (GOG's, or another mod's) is never replaced or
+  removed.
 
 ## How it works
 
@@ -69,16 +89,22 @@ is supported; otherwise nothing is changed.
 ## Building
 
 Requires the Visual Studio Build Tools (MSVC, x86). Run `build.bat`; it produces
-`build\dinput8.dll` and `build\KL_StutterFix.exe` (with the DLL embedded).
+`build\dinput8.dll`, `build\xlive.dll` and `build\KL_Fix.exe` (with both DLLs
+embedded). The installer is C# / WPF, compiled with the `csc.exe` of the .NET Framework 4
+that ships with Windows. `build.bat test` also runs the `xlive.dll` API tests.
 
 | File | Purpose |
 |---|---|
-| `kl_patches.h` | Patch patterns, shared by the DLL and the installer |
+| `kl_patches.h` | Patch patterns (the installer has a copy in `installer\Core.cs`) |
 | `kl_hud.h`, `kl_menu.h` | HUD, subtitle and menu scale hooks (DLL only) |
 | `dinput8_proxy.c`, `dinput8.def`, `dinput8_proxy.rc` | In-memory patch DLL / DirectInput proxy |
-| `kl_stutter_fix.c`, `kl_stutter_fix.rc` | Installer |
+| `xlive\` | Offline GFWL replacement (XLiveLess, see [third-party notices](THIRD_PARTY_NOTICES.md)) and its tests |
+| `installer\Core.cs` | Installer: game discovery, state, install / uninstall, settings |
+| `installer\MainWindow.cs`, `installer\Program.cs` | Installer window and command line |
 | `README.txt` | Readme shipped in the release zip |
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). `xlive\` is adapted from
+[Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader) (MIT,
+[notice](licenses/Ultimate-ASI-Loader-MIT.txt)); see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

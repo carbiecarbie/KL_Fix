@@ -1,5 +1,5 @@
 /*
- * Kane & Lynch: Dead Men - Stutter Fix, in-memory patch (dinput8.dll proxy).
+ * Kane & Lynch: Dead Men - KL Fix, in-memory patch (dinput8.dll proxy).
  *
  * The game imports dinput8.dll, so this DLL is loaded from the game folder at
  * startup. It applies the patches from kl_patches.h to the game's code in memory,
@@ -20,8 +20,8 @@
 
 #define GAME_EXE L"kaneandlynch.exe"
 #define CHAIN_DLL L"dinput8_next.dll"
-#define LOG_FILE L"KL_StutterFix.log"
-#define INI_FILE L"KL_StutterFix.ini"
+#define LOG_FILE L"KL_Fix.log"
+#define INI_FILE L"KL_Fix.ini"
 
 static HMODULE g_real;
 static wchar_t g_game_dir[MAX_PATH];
