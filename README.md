@@ -60,3 +60,7 @@ Requires the Visual Studio Build Tools (MSVC, x86). Run `build.bat`; it produces
 | `dinput8_proxy.c`, `dinput8.def`, `dinput8_proxy.rc` | In-memory patch DLL / DirectInput proxy |
 | `kl_stutter_fix.c`, `kl_stutter_fix.rc` | Installer |
 | `README.txt` | Readme shipped in the release zip |
+
+## License
+
+[MIT](LICENSE)
