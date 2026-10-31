@@ -10,6 +10,10 @@
  * dinput8_next.dll and chain-loaded by the proxy. Version 1.0 patched the exe on
  * disk; installing or uninstalling restores it from that version's backup.
  *
+ * The proxy also scales the HUD, subtitles and menus for high resolutions; its
+ * settings file KL_StutterFix.ini is created with defaults on install (an existing
+ * one is kept) and removed on uninstall.
+ *
  * Usage: KL_StutterFix.exe [--install | --uninstall] [game folder or kaneandlynch.exe]
  */
 #define _CRT_SECURE_NO_WARNINGS  /* buffers are explicitly bounded and terminated */
@@ -20,11 +24,12 @@
 #include <string.h>
 #include "kl_patches.h"
 
-#define VERSION "2.0"
+#define VERSION "2.1"
 #define EXE_NAME L"kaneandlynch.exe"
 #define DLL_NAME L"dinput8.dll"
 #define CHAIN_NAME L"dinput8_next.dll"
 #define LOG_NAME L"KL_StutterFix.log"
+#define INI_NAME L"KL_StutterFix.ini"
 #define BACKUP_SUFFIX L".stutterfix-backup"
 #define LEGACY_BACKUP_SUFFIX L".orig"
 #define DLL_MARKER L"KL_StutterFix_dinput8"
@@ -217,6 +222,7 @@ typedef struct {
     wchar_t dll[PATH_CAP];
     wchar_t chain[PATH_CAP];
     wchar_t log[PATH_CAP];
+    wchar_t ini[PATH_CAP];
     wchar_t backup[PATH_CAP];   /* original exe saved by version 1.0, if any */
     BOOL exe_supported;         /* every patch site found, original or patched */
     BOOL exe_patched;           /* modified on disk by version 1.0 */
@@ -284,6 +290,7 @@ static BOOL load_state(const wchar_t *exe, GameState *st) {
     sibling(exe, DLL_NAME, st->dll);
     sibling(exe, CHAIN_NAME, st->chain);
     sibling(exe, LOG_NAME, st->log);
+    sibling(exe, INI_NAME, st->ini);
 
     unsigned char *data = read_file(exe, &size);
     if (!data) return FALSE;
@@ -340,6 +347,18 @@ static BOOL restore_v1_exe(GameState *st) {
     return TRUE;
 }
 
+static const char DEFAULT_INI[] =
+    "; Kane & Lynch: Dead Men - Stutter Fix " VERSION " settings\r\n"
+    "; Sizes of the HUD, subtitles and menus at high resolutions.\r\n"
+    "; auto = screen height / 1080 (2.0 at 4K, 1.33 at 1440p: they look as at 1080p).\r\n"
+    "; Or a number from 0.5 to 4. Changes apply the next time the game starts.\r\n"
+    "[Display]\r\n"
+    "HudScale=auto\r\n"
+    "; auto = same as HudScale\r\n"
+    "SubtitleScale=auto\r\n"
+    "; 1 = off (menus at native pixel size)\r\n"
+    "MenuScale=auto\r\n";
+
 static BOOL do_install(GameState *st) {
     HRSRC res = FindResourceW(NULL, MAKEINTRESOURCEW(IDR_PROXY_DLL), (LPCWSTR)RT_RCDATA);
     HGLOBAL mem = res ? LoadResource(NULL, res) : NULL;
@@ -365,8 +384,11 @@ static BOOL do_install(GameState *st) {
     if (!write_file_atomic(st->dll, dll, dll_size)) return FALSE;
     st->dll_ours = TRUE;
     st->dll_foreign = FALSE;
+    if (!file_exists(st->ini) && !write_file_atomic(st->ini, DEFAULT_INI, sizeof(DEFAULT_INI) - 1))
+        return FALSE;
 
     printf("\nDone! The stutter fix is installed.\n");
+    printf("HUD, subtitle and menu sizes can be changed in KL_StutterFix.ini in the game folder.\n");
     printf("Note: connect your controllers before starting the game; controllers plugged in\nwhile the game is running are not detected.\n");
     return TRUE;
 }
@@ -383,6 +405,7 @@ static BOOL do_uninstall(GameState *st) {
         }
     }
     delete_file(st->log);
+    delete_file(st->ini);
     if (!restore_v1_exe(st)) return FALSE;
     printf("\nThe stutter fix was removed.\n");
     return TRUE;
@@ -410,7 +433,8 @@ int wmain(int argc, wchar_t **argv) {
     BOOL interactive = mode == 0;
 
     printf("Kane & Lynch: Dead Men - Stutter Fix " VERSION "\n");
-    printf("Removes the hitch every 2 seconds and smooths frame timing.\n\n");
+    printf("Removes the hitch every 2 seconds, smooths frame timing and enlarges the\n"
+           "HUD, subtitles and menus at high resolutions (4K).\n\n");
 
     if (!find_game(argc, argv, first_arg, exe) && !(interactive && ask_game_folder(exe))) {
         printf("Game not found.\n");

@@ -2,8 +2,8 @@
  * Kane & Lynch: Dead Men - Stutter Fix, in-memory patch (dinput8.dll proxy).
  *
  * The game imports dinput8.dll, so this DLL is loaded from the game folder at
- * startup. It applies the patches from kl_patches.h to the game's code in memory
- * and forwards DirectInput to the real DLL. kaneandlynch.exe is never modified on
+ * startup. It applies the patches from kl_patches.h to the game's code in memory,
+ * installs the HUD/subtitle/menu scale hooks (kl_hud.h, kl_menu.h) and forwards DirectInput to the real DLL. kaneandlynch.exe is never modified on
  * disk, which keeps its signature valid for Games for Windows - LIVE (Steam and
  * retail versions refuse to start with a modified exe).
  *
@@ -15,10 +15,13 @@
 #include <windows.h>
 #include <stdio.h>
 #include "kl_patches.h"
+#include "kl_hud.h"
+#include "kl_menu.h"
 
 #define GAME_EXE L"kaneandlynch.exe"
 #define CHAIN_DLL L"dinput8_next.dll"
 #define LOG_FILE L"KL_StutterFix.log"
+#define INI_FILE L"KL_StutterFix.ini"
 
 static HMODULE g_real;
 static wchar_t g_game_dir[MAX_PATH];
@@ -82,6 +85,12 @@ static void apply_patches(void) {
         msg[sizeof(msg) - 1] = 0;
         log_line(msg);
     }
+
+    wchar_t ini[MAX_PATH];
+    _snwprintf(ini, MAX_PATH, L"%s\\%s", g_game_dir, INI_FILE);
+    ini[MAX_PATH - 1] = 0;
+    kl_hud_apply(code, code_size, ini, log_line);
+    kl_menu_apply(code, code_size, ini, log_line);
 }
 
 static BOOL is_game_process(void) {
